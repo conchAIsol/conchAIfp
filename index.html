@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$conchAI</title>
+    <link rel="stylesheet" href="./static/index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=iLBVBZNx"></script>
+
+    <div id="chatbox">
+        <h1 id="title">speak to the conch</h1>
+        <div id="chat">
+            
+                <p id="response" class="conchReply">what's up jit, what u wanna know about ur future?</p>
+                <script>
+                    responsiveVoice.speak("what's up jit, what u wanna know about ur future?", "US English Female")
+                </script>
+           
+        </div>
+            <div id="chatbar">
+                <input type="text" id="userinput" name="user_input" placeholder="Type here..." required>
+            <button type="button" id="sendButton" onclick="handleSend()">Send</button>
+            </div>
+            
+        
+    </div>
+    <img src="../static/images/conch.png" id="conch">
+    <script type="text/javascript">
+        // Test that script is running
+        console.log("Script loaded");
+        var disabled = false;
+
+        // Make function explicitly global
+        var msgRef;
+        socket = new WebSocket('wss://conchai.onrender.com/ws')
+        socket.onopen = function(event){
+            console.log('socket connected')
+
+            document.getElementById('userinput').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') { // Check if the pressed key is Enter
+                    handleSend(); // Call the function to send input
+                    event.preventDefault(); // Prevent default form submission if inside a form
+                }
+            });
+        }
+        window.handleSend = async function() {
+            if(disabled == false && document.getElementById('userinput').value != ''){
+                
+            disabled = true;
+            document.getElementById('userinput').placeholder = 'Wait for the conch'
+            console.log("handleSend executed");
+            let userInput = document.getElementById('userinput').value;
+            let submit = `${userInput}`
+
+            socket.send(submit)
+            console.log("socket emitted")
+            document.getElementById('userinput').value = ''
+            document.getElementById('userinput').disabled = true
+            document.getElementsByName('sendButton').disabled = true
+            let myMsg = document.createElement('p')
+            myMsg.textContent = userInput
+            myMsg.className = 'myReply'
+            document.getElementById('chat').appendChild(myMsg)
+            let newMsg = document.createElement('p')
+            newMsg.textContent = 'the conch is thinking...'
+            newMsg.className = "conchReply"
+            document.getElementById('chat').appendChild(newMsg)
+            msgRef = newMsg
+
+            document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight
+            
+            window.handleChange = function(data){
+                console.log(data);
+                        msgRef.style.whiteSpace = 'normal'
+                        msgRef.textContent = data
+                        responsiveVoice.speak(data, "US English Female")
+                        document.getElementById('userinput').disabled = false
+                        document.getElementById('sendButton').disabled = false
+                        document.getElementById('userinput').placeholder = 'Type here...'
+                        disabled = false;
+    
+            }
+
+            
+            
+            
+        };
+
+        socket.onmessage = function(event){
+            console.log('received data')
+            handleChange(event.data)
+        }
+
+        
+
+        window.longPoll = function() {
+            console.log("poll");
+            fetch('/long-poll')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    msgRef.style.whiteSpace = 'normal'
+                    msgRef.textContent = data
+                    responsiveVoice.speak(data, "US English Female")
+                    document.getElementById('userinput').disabled = false
+                    document.getElementById('sendButton').disabled = false
+                    document.getElementById('userinput').placeholder = 'Type here...'
+                    disabled = false;
+                    // Display the response from the server
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Retry long polling after an error
+                    setTimeout(longPoll, 2000);
+                });
+        };
+
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM loaded");
+            const button = document.getElementById('sendButton');
+            const input = document.getElementById('userinput');
+
+            if (button) {
+                button.onclick = window.handleSend;
+                console.log("Button handler attached");
+            }
+
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        window.handleSend();
+                    }
+                });
+            }
+        });
+
+        // Initialize variables
+        var currMsg = '{{ text | safe | tojson }}';
+            }
+            
+    </script>
+
+</body>
+</html>
