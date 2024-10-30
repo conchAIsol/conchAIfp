@@ -1,6 +1,7 @@
 import asyncio
 import websockets
 import uuid
+import os
 from aiohttp import web
 from characterai import aiocai
 
