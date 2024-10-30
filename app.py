@@ -12,7 +12,7 @@ class CombinedServer:
         self.app.router.add_get('/', self.handle_http)
         self.app.router.add_get('/ws', self.handle_websocket)
         static_path = os.path.join(os.path.dirname(__file__), 'static')
-        self.app.router.add_get('/static/', path=static_path, name='static')
+        self.app.router.add_static('/static/', static_path)
         
     async def handle_http(self, request):
         # Serve your static files or handle HTTP requests here
